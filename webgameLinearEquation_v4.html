@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>一元一次方程解題 WebGame</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- KaTeX CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'Outfit', 'sans-serif'],
+                        math: ['Outfit', 'Noto Sans TC', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-success {
+            box-shadow: 0 0 35px rgba(34, 197, 94, 0.35);
+        }
+        .glow-medal {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        .lvl-btn-active {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+        }
+        .lvl-btn:not(.lvl-btn-active) {
+            color: #94a3b8;
+        }
+        .lvl-btn:not(.lvl-btn-active):hover {
+            color: #f1f5f9;
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between font-sans antialiased text-slate-100 overflow-x-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 h-14 flex items-center">
+        <div class="max-w-7xl w-full mx-auto px-3 py-1 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 flex-shrink-0">
+                    <i class="fa-solid fa-square-root-variable text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-indigo-300 via-white to-violet-300 bg-clip-text text-transparent leading-tight">
+                        一元一次方程解題實驗室
+                    </h1>
+                    <p class="text-[10px] text-slate-400 hidden sm:block">iPad 最佳化版 • 代數步驟模擬器</p>
+                </div>
+            </div>
+
+            <!-- Level Selector Pills -->
+            <div class="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-[11px] font-medium overflow-x-auto">
+                <button onclick="setLevel('1')" id="btn-lvl-1" class="lvl-btn px-2 py-1 rounded-lg transition-all whitespace-nowrap">L1 一步</button>
+                <button onclick="setLevel('2')" id="btn-lvl-2" class="lvl-btn px-2 py-1 rounded-lg transition-all whitespace-nowrap">L2 兩步</button>
+                <button onclick="setLevel('3')" id="btn-lvl-3" class="lvl-btn px-2 py-1 rounded-lg transition-all whitespace-nowrap">L3 雙邊x</button>
+                <button onclick="setLevel('4')" id="btn-lvl-4" class="lvl-btn px-2 py-1 rounded-lg transition-all whitespace-nowrap">L4 括號</button>
+                <button onclick="setLevel('5')" id="btn-lvl-5" class="lvl-btn px-2 py-1 rounded-lg transition-all whitespace-nowrap">L5 分數</button>
+                <button onclick="setLevel('random')" id="btn-lvl-random" class="lvl-btn px-2 py-1 rounded-lg transition-all whitespace-nowrap"><i class="fa-solid fa-dice mr-0.5"></i>隨機</button>
+                <button onclick="openCustomModal()" id="btn-lvl-custom" class="lvl-btn px-2 py-1 rounded-lg transition-all text-amber-400 hover:bg-amber-500/10 whitespace-nowrap"><i class="fa-solid fa-pen-to-square mr-0.5"></i>自訂</button>
+            </div>
+
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <!-- Medal Collection Cabinet Button -->
+                <button onclick="openMedalsModal()" class="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-xl border border-amber-500/30 transition text-[11px] font-bold">
+                    <i class="fa-solid fa-award text-amber-400 text-sm"></i>
+                    <span>獎章</span>
+                    <span id="medal-counter-badge" class="bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-0.5">0/6</span>
+                </button>
+
+                <!-- Manual Simplification Mode Toggle Switch -->
+                <div class="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-xl border border-indigo-500/30 flex-shrink-0">
+                    <span class="text-[11px] font-bold text-slate-300 flex items-center gap-1">
+                        <i class="fa-solid fa-hand text-indigo-400"></i> 手動化簡
+                    </span>
+                    <button onclick="toggleManualMode()" id="btn-manual-toggle" class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors duration-200 ease-in-out focus:outline-none">
+                        <span id="manual-toggle-dot" class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-4"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl w-full mx-auto p-2 sm:p-3 flex-1 grid grid-cols-1 md:grid-cols-12 gap-2.5 items-start md:h-[calc(100vh-4rem)]">
+
+        <!-- Left Column: Unified Deduction Board -->
+        <section class="md:col-span-7 lg:col-span-8 flex flex-col h-full overflow-hidden">
+
+            <div class="glass-card rounded-2xl p-3 border border-indigo-500/30 relative overflow-hidden flex flex-col h-full">
+                <div class="absolute -top-12 -right-12 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <!-- Board Toolbar Header -->
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-800 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span id="level-badge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            關卡模式
+                        </span>
+                        <span id="step-count-tag" class="text-xs font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-700">0 步驟</span>
+                        <span id="score-count-tag" class="text-xs font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/30 flex items-center gap-1">
+                            <i class="fa-solid fa-star text-amber-400"></i> 總分: 0 分
+                        </span>
+                    </div>
+
+                    <div class="flex gap-1.5">
+                        <button onclick="showHint()" title="獲取解題提示" class="px-2.5 py-1 bg-indigo-950/80 hover:bg-indigo-900/80 text-indigo-300 text-xs rounded-lg border border-indigo-700/50 transition flex items-center gap-1 font-semibold">
+                            <i class="fa-solid fa-lightbulb text-amber-400"></i> 提示
+                        </button>
+                        <button onclick="undoStep()" title="復原上一步" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition flex items-center gap-1 font-medium">
+                            <i class="fa-solid fa-rotate-left"></i> 上一步
+                        </button>
+                        <button onclick="resetEquation()" title="重新開始此題" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition flex items-center gap-1 font-medium">
+                            <i class="fa-solid fa-arrows-rotate"></i> 重來
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2-Column Table Headers -->
+                <div class="grid grid-cols-12 gap-2 pb-1.5 px-2 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex-shrink-0">
+                    <div class="col-span-2 flex items-center gap-1 truncate">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i> 說明
+                    </div>
+                    <div class="col-span-10 text-center flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-equals text-indigo-400"></i> 方程式 (等號置中對齊)
+                    </div>
+                </div>
+
+                <!-- Timeline / Deduction Display Container -->
+                <div id="current-equation-display" class="flex-1 overflow-y-auto space-y-2 pt-2 pr-1">
+                    <!-- Rendered 2-Column Deductions -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Calculator Keypad Panel (Max width constrained to 320px) -->
+        <section class="md:col-span-5 lg:col-span-4 flex flex-col gap-2 h-full overflow-y-auto pr-0.5 items-center md:items-stretch">
+
+            <!-- Fast Command-Line Bar with Visual Calculator Keypad (Card Max-Width: 320px) -->
+            <div class="glass-card rounded-2xl p-2.5 border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 to-slate-900/80 flex-shrink-0 max-w-[320px] mx-auto w-full">
+                <label class="block text-[11px] font-bold text-indigo-300 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> 指令與計算盤</span>
+                    <span class="text-[10px] text-slate-400 font-normal">按鈕或文字輸入</span>
+                </label>
+
+                <form onsubmit="handleQuickCommandSubmit(event)" class="flex items-center gap-1 mb-1.5">
+                    <input type="text" id="quick-cmd-input" inputmode="none" onfocus="lastFocusedInput = this" placeholder="-7, +3x, ÷2, 展開" 
+                           class="flex-1 bg-slate-950 border border-indigo-500/40 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 font-math shadow-inner">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center gap-1 flex-shrink-0">
+                        執行
+                    </button>
+                </form>
+
+                <!-- Compact Square-Key Calculator Keypad -->
+                <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-1.5 shadow-inner">
+                    <div class="grid grid-cols-4 gap-1 text-center select-none font-math max-w-[260px] mx-auto">
+                        <!-- Row 1: Backspace, AC, Expand/Simplify, Divide -->
+                        <button type="button" onmousedown="event.preventDefault()" onclick="backspaceCalcInput()" title="退格" class="aspect-square bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition text-xs sm:text-sm flex items-center justify-center active:scale-95 border border-slate-700/50">
+                            <i class="fa-solid fa-backspace"></i>
+                        </button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="clearCalcInput()" title="清除全部" class="aspect-square bg-slate-800 hover:bg-slate-700 text-rose-400 font-extrabold rounded-lg transition text-xs flex items-center justify-center active:scale-95 border border-slate-700/50">
+                            AC
+                        </button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('展開')" title="展開 / 化簡括號" class="aspect-square bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 font-bold rounded-lg transition text-[11px] sm:text-xs flex items-center justify-center active:scale-95 border border-indigo-500/40">
+                            展開
+                        </button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('÷')" class="aspect-square bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 shadow-md shadow-amber-600/20">
+                            ÷
+                        </button>
+
+                        <!-- Row 2: 7, 8, 9, Multiply -->
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('7')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">7</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('8')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">8</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('9')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">9</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('×')" class="aspect-square bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 shadow-md shadow-amber-600/20">×</button>
+
+                        <!-- Row 3: 4, 5, 6, Subtract -->
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('4')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">4</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('5')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">5</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('6')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">6</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('-')" class="aspect-square bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 shadow-md shadow-amber-600/20">-</button>
+
+                        <!-- Row 4: 1, 2, 3, Add -->
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('1')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">1</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('2')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">2</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('3')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">3</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('+')" class="aspect-square bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 shadow-md shadow-amber-600/20">+</button>
+
+                        <!-- Row 5: x, 0, /, Enter -->
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('x')" class="aspect-square bg-slate-800/90 hover:bg-indigo-600/80 text-indigo-300 font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 hover:text-white border border-indigo-500/40">x</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('0')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-white font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">0</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="appendCalcInput('/')" class="aspect-square bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-bold rounded-lg transition text-base sm:text-lg flex items-center justify-center active:scale-95 border border-slate-700/40">/</button>
+                        <button type="button" onmousedown="event.preventDefault()" onclick="handleKeypadSubmit(event)" title="執行指令 / 送出化簡" class="aspect-square bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition text-xs sm:text-sm flex items-center justify-center active:scale-95 shadow-lg shadow-indigo-600/30">
+                            <i class="fa-solid fa-turn-down fa-rotate-90"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Suggestion Quick Actions (Card Max-Width: 320px) -->
+            <div class="glass-card rounded-2xl p-2 border border-slate-800 flex-shrink-0 max-w-[320px] mx-auto w-full">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-[11px] font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> 動態智慧建議
+                    </h3>
+                    <button type="button" onclick="toggleSmartSuggestions()" id="btn-toggle-smart" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 rounded-lg text-[10px] font-semibold transition flex items-center gap-1">
+                        <i id="icon-toggle-smart" class="fa-solid fa-eye"></i> <span id="text-toggle-smart">顯示</span>
+                    </button>
+                </div>
+                <div id="smart-actions-grid" class="grid grid-cols-2 gap-1.5 hidden">
+                    <!-- Dynamically populated smart suggestions -->
+                </div>
+            </div>
+
+            <!-- Medal Collection Progress Panel (Card Max-Width: 320px) -->
+            <div class="glass-card rounded-2xl p-2.5 border border-slate-800 flex-shrink-0 max-w-[320px] mx-auto w-full">
+                <div class="flex items-center justify-between mb-1.5">
+                    <h3 class="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-award text-amber-400"></i> 獎章收集進度
+                    </h3>
+                    <button onclick="openMedalsModal()" class="text-[10px] text-slate-400 hover:text-amber-300 font-medium transition flex items-center gap-0.5">
+                        詳情 <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                    </button>
+                </div>
+                <div id="side-medals-grid" class="grid grid-cols-2 gap-1.5">
+                    <!-- Populated dynamically via JavaScript -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Medal Cabinet Modal -->
+    <div id="medals-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-2xl w-full rounded-2xl p-5 border border-amber-500/30 shadow-2xl relative max-h-[90vh] flex flex-col">
+            <button onclick="closeMedalsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center gap-2.5 mb-1">
+                <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white leading-tight">榮譽獎章收集櫃</h3>
+                    <p class="text-[11px] text-slate-400">挑戰關卡與手動模式，收集屬於你的代數榮耀！</p>
+                </div>
+            </div>
+
+            <div id="medals-grid-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-3 overflow-y-auto pr-1 flex-1">
+                <!-- Dynamically populated medal cards -->
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-800/80">
+                <button type="button" onclick="closeMedalsModal()" class="px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition font-semibold">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medal Unlocked Celebration Modal -->
+    <div id="medal-unlock-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-sm w-full rounded-2xl p-6 border border-amber-500/50 shadow-2xl text-center relative overflow-hidden animate-fadeIn glow-medal">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 mx-auto flex items-center justify-center text-3xl shadow-lg shadow-amber-500/40 mb-3 animate-bounce">
+                <i id="unlock-modal-icon" class="fa-solid fa-award"></i>
+            </div>
+            <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 mb-1">
+                獲得新獎章！
+            </span>
+            <h3 id="unlock-modal-title" class="text-lg font-black text-white mb-1">初露鋒芒</h3>
+            <p id="unlock-modal-desc" class="text-xs text-slate-300 mb-4">通過 L1 關卡 10 次</p>
+            <button onclick="closeUnlockModal()" class="w-full py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/30 transition">
+                太棒了！收下獎章
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Equation Modal (Enables iOS Native Keyboard) -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-md w-full rounded-2xl p-5 border border-slate-700 shadow-2xl relative">
+            <button onclick="closeCustomModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-base font-bold text-white mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square text-indigo-400"></i> 輸入自訂方程式
+            </h3>
+            <p class="text-xs text-slate-400 mb-3">請輸入標準的一元一次方程式（以等號 '=' 分隔兩邊）：</p>
+
+            <form onsubmit="handleCustomEquationSubmit(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">方程式內容：</label>
+                    <!-- Trigger iOS native keyboard by using inputmode="text" -->
+                    <input type="text" id="custom-equation-input" inputmode="text" onfocus="lastFocusedInput = this" placeholder="例如：(2x + 7)/3 = 5 或 2(x + 3) = 16" 
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 font-math focus:outline-none focus:border-indigo-500">
+                    <p id="custom-modal-error" class="text-rose-400 text-xs mt-1.5 hidden"></p>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeCustomModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition">
+                        取消
+                    </button>
+                    <button type="submit" class="px-5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition">
+                        開始解題
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Box -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-slate-900 border border-rose-500/40 text-rose-300 px-4 py-2.5 rounded-xl shadow-xl text-xs flex items-center gap-2 transform transition-all duration-300 translate-y-12 opacity-0 pointer-events-none">
+        <i class="fa-solid fa-circle-exclamation text-rose-400 text-sm"></i>
+        <span id="toast-msg">運算錯誤</span>
+    </div>
+
+    <!-- Game Engine Logic -->
+    <script>
+        let lastFocusedInput = null;
+
+        document.addEventListener('focusin', (e) => {
+            if (e.target && e.target.tagName === 'INPUT') {
+                lastFocusedInput = e.target;
+            }
+        });
+
+        let toastTimeout = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            if (!toast || !toastMsg) return;
+
+            toastMsg.innerText = msg;
+            toast.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-12', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // Stats & Medal Persistence Logic
+        let stats = {
+            levelPassCounts: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
+            manualModeSolvedCount: 0,
+            unlockedMedals: []
+        };
+
+        const MEDALS_CONFIG = [
+            { id: 'lvl1_10', name: 'L1 初露鋒芒', icon: 'fa-seedling', color: 'from-emerald-500 to-teal-600', desc: '通過 L1 關卡 10 次', getProgress: () => stats.levelPassCounts['1'] || 0, target: 10 },
+            { id: 'lvl2_10', name: 'L2 熟能生巧', icon: 'fa-feather', color: 'from-blue-500 to-indigo-600', desc: '通過 L2 關卡 10 次', getProgress: () => stats.levelPassCounts['2'] || 0, target: 10 },
+            { id: 'lvl3_10', name: 'L3 左右逢源', icon: 'fa-scale-balanced', color: 'from-purple-500 to-violet-600', desc: '通過 L3 關卡 10 次', getProgress: () => stats.levelPassCounts['3'] || 0, target: 10 },
+            { id: 'lvl4_10', name: 'L4 括號破譯者', icon: 'fa-shield-halved', color: 'from-amber-500 to-orange-600', desc: '通過 L4 關卡 10 次', getProgress: () => stats.levelPassCounts['4'] || 0, target: 10 },
+            { id: 'lvl5_10', name: 'L5 分數征服者', icon: 'fa-crown', color: 'from-rose-500 to-red-600', desc: '通過 L5 關卡 10 次', getProgress: () => stats.levelPassCounts['5'] || 0, target: 10 },
+            { id: 'manual_30', name: '手動一步一腳印', icon: 'fa-hand-back-fist', color: 'from-yellow-400 to-amber-600', desc: '完成手動模式 30 題', getProgress: () => stats.manualModeSolvedCount || 0, target: 30 }
+        ];
+
+        function loadStats() {
+            try {
+                const saved = localStorage.getItem('algebra_lab_stats');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.levelPassCounts) stats.levelPassCounts = { ...stats.levelPassCounts, ...parsed.levelPassCounts };
+                    if (typeof parsed.manualModeSolvedCount === 'number') stats.manualModeSolvedCount = parsed.manualModeSolvedCount;
+                    if (Array.isArray(parsed.unlockedMedals)) stats.unlockedMedals = parsed.unlockedMedals;
+                }
+            } catch (e) {
+                console.error("無法載入本地存檔", e);
+            }
+            updateMedalBadgeUI();
+            renderRightMedalsProgress();
+        }
+
+        function saveStats() {
+            try {
+                localStorage.setItem('algebra_lab_stats', JSON.stringify(stats));
+            } catch (e) {
+                console.error("無法儲存本地存檔", e);
+            }
+        }
+
+        function updateMedalBadgeUI() {
+            const badge = document.getElementById('medal-counter-badge');
+            if (badge) {
+                badge.innerText = `${stats.unlockedMedals.length}/${MEDALS_CONFIG.length}`;
+            }
+        }
+
+        /**
+         * Renders the compact Medal Progress Grid in the Right Column
+         */
+        function renderRightMedalsProgress() {
+            const container = document.getElementById('side-medals-grid');
+            if (!container) return;
+
+            let html = '';
+            MEDALS_CONFIG.forEach(m => {
+                const isUnlocked = stats.unlockedMedals.includes(m.id);
+                const current = Math.min(m.getProgress(), m.target);
+
+                html += `
+                    <div class="p-1.5 rounded-xl border flex items-center gap-2 transition-all ${
+                        isUnlocked 
+                            ? 'bg-amber-950/40 border-amber-500/50 shadow-sm shadow-amber-500/20' 
+                            : 'bg-slate-950/50 border-slate-800/80 opacity-50'
+                    }">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${
+                            isUnlocked 
+                                ? 'bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 font-black shadow-md shadow-amber-500/40 ring-2 ring-amber-400/30' 
+                                : 'bg-slate-900 text-slate-600 border border-slate-800'
+                        }">
+                            <i class="fa-solid ${m.icon}"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[10px] font-bold truncate ${isUnlocked ? 'text-amber-200' : 'text-slate-400'}">${m.name}</div>
+                            <div class="text-[9px] font-semibold ${isUnlocked ? 'text-emerald-400' : 'text-slate-500'}">
+                                ${isUnlocked ? '<i class="fa-solid fa-check text-[8px] mr-0.5"></i>已解鎖' : `${current}/${m.target}`}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function onProblemSolved() {
+            let newlyUnlocked = [];
+
+            // 1. Increment Level Pass Counter
+            if (state.level >= '1' && state.level <= '5') {
+                stats.levelPassCounts[state.level] = (stats.levelPassCounts[state.level] || 0) + 1;
+            }
+
+            // 2. Increment Manual Mode Solved Counter
+            if (state.isManualMode) {
+                stats.manualModeSolvedCount = (stats.manualModeSolvedCount || 0) + 1;
+            }
+
+            // 3. Check Medal Unlocks
+            MEDALS_CONFIG.forEach(m => {
+                if (!stats.unlockedMedals.includes(m.id) && m.getProgress() >= m.target) {
+                    stats.unlockedMedals.push(m.id);
+                    newlyUnlocked.push(m);
+                }
+            });
+
+            saveStats();
+            updateMedalBadgeUI();
+            renderRightMedalsProgress();
+
+            if (newlyUnlocked.length > 0) {
+                setTimeout(() => {
+                    showMedalUnlockModal(newlyUnlocked[0]);
+                }, 600);
+            }
+        }
+
+        function openMedalsModal() {
+            const container = document.getElementById('medals-grid-container');
+            if (!container) return;
+
+            let html = '';
+            MEDALS_CONFIG.forEach(m => {
+                const isUnlocked = stats.unlockedMedals.includes(m.id);
+                const current = Math.min(m.getProgress(), m.target);
+                const percent = Math.min(100, Math.round((current / m.target) * 100));
+
+                html += `
+                    <div class="glass-card rounded-xl p-3 border ${isUnlocked ? 'border-amber-500/40 bg-amber-950/20' : 'border-slate-800 opacity-75'} flex items-center gap-3 relative overflow-hidden">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr ${isUnlocked ? m.color : 'from-slate-800 to-slate-700 text-slate-500'} flex items-center justify-center text-xl shadow-lg flex-shrink-0">
+                            <i class="fa-solid ${m.icon} ${isUnlocked ? 'text-slate-950' : 'text-slate-500'}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-1 mb-0.5">
+                                <h4 class="text-xs font-bold text-white truncate">${m.name}</h4>
+                                ${isUnlocked ? `<span class="text-[9px] font-extrabold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/30 flex items-center gap-0.5 flex-shrink-0"><i class="fa-solid fa-check"></i>已解鎖</span>` : `<span class="text-[9px] font-bold text-slate-400 flex-shrink-0">${current}/${m.target}</span>`}
+                            </div>
+                            <p class="text-[10px] text-slate-400 mb-1.5 leading-tight">${m.desc}</p>
+                            <div class="w-full bg-slate-950 rounded-full h-1.5 border border-slate-800 overflow-hidden">
+                                <div class="bg-gradient-to-r ${isUnlocked ? 'from-amber-400 to-yellow-300' : 'from-indigo-600 to-violet-500'} h-full transition-all duration-300" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            const modal = document.getElementById('medals-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeMedalsModal() {
+            const modal = document.getElementById('medals-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function showMedalUnlockModal(medal) {
+            const modal = document.getElementById('medal-unlock-modal');
+            const icon = document.getElementById('unlock-modal-icon');
+            const title = document.getElementById('unlock-modal-title');
+            const desc = document.getElementById('unlock-modal-desc');
+
+            if (icon) icon.className = `fa-solid ${medal.icon}`;
+            if (title) title.innerText = medal.name;
+            if (desc) desc.innerText = medal.desc;
+
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeUnlockModal() {
+            const modal = document.getElementById('medal-unlock-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        /**
+         * Converts equation strings into formatted LaTeX, handling fractions and preserving bracket structures
+         */
+        function stringToLaTeX(str) {
+            if (!str) return '0';
+            let s = str.trim().replace(/\s*\/\s*/g, '/'); // normalize fraction slashes and remove extra spaces
+            s = s.replace(/\(([^)]+)\)\/(-?\d+(?:\.\d+)?)/g, '\\frac{$1}{$2}');
+            s = s.replace(/([a-zA-Z0-9]+)\/(-?\d+(?:\.\d+)?)/g, '\\frac{$1}{$2}');
+            s = s.replace(/\*/g, ' \\cdot ');
+            return s;
+        }
+
+        class Fraction {
+            constructor(n, d = 1) {
+                if (d === 0) throw new Error("分母不能為零");
+                if (n instanceof Fraction) {
+                    this.n = n.n;
+                    this.d = n.d;
+                } else {
+                    let num = Number(n);
+                    let den = Number(d);
+                    if (!Number.isInteger(num) || !Number.isInteger(den)) {
+                        let scale = 1;
+                        while (!Number.isInteger(num * scale) || !Number.isInteger(den * scale)) {
+                            scale *= 10;
+                            if (scale >= 1e8) break;
+                        }
+                        this.n = Math.round(num * scale);
+                        this.d = Math.round(den * scale);
+                    } else {
+                        this.n = Math.round(num);
+                        this.d = Math.round(den);
+                    }
+                }
+                this.reduce();
+            }
+
+            reduce() {
+                if (this.d < 0) {
+                    this.n = -this.n;
+                    this.d = -this.d;
+                }
+                if (this.n === 0) {
+                    this.d = 1;
+                    return;
+                }
+                const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+                const g = Math.abs(gcd(this.n, this.d));
+                this.n /= g;
+                this.d /= g;
+            }
+
+            add(other) {
+                const o = other instanceof Fraction ? other : new Fraction(other);
+                return new Fraction(this.n * o.d + o.n * this.d, this.d * o.d);
+            }
+
+            sub(other) {
+                const o = other instanceof Fraction ? other : new Fraction(other);
+                return new Fraction(this.n * o.d - o.n * this.d, this.d * o.d);
+            }
+
+            mul(other) {
+                const o = other instanceof Fraction ? other : new Fraction(other);
+                return new Fraction(this.n * o.n, this.d * o.d);
+            }
+
+            div(other) {
+                const o = other instanceof Fraction ? other : new Fraction(other);
+                if (o.n === 0) throw new Error("不能除以零");
+                return new Fraction(this.n * o.d, this.d * o.n);
+            }
+
+            negate() {
+                return new Fraction(-this.n, this.d);
+            }
+
+            isZero() { return this.n === 0; }
+            isOne() { return this.n === 1 && this.d === 1; }
+            isNegative() { return this.n < 0; }
+
+            toString() {
+                if (this.d === 1) return `${this.n}`;
+                return `${this.n}/${this.d}`;
+            }
+
+            toLaTeX() {
+                if (this.d === 1) return `${this.n}`;
+                if (this.n < 0) return `-\\frac{${Math.abs(this.n)}}{${this.d}}`;
+                return `\\frac{${this.n}}{${this.d}}`;
+            }
+        }
+
+        class LinearExpr {
+            constructor(coeff, constVal) {
+                this.coeff = coeff instanceof Fraction ? coeff : new Fraction(coeff);
+                this.constVal = constVal instanceof Fraction ? constVal : new Fraction(constVal);
+            }
+
+            clone() {
+                return new LinearExpr(this.coeff, this.constVal);
+            }
+
+            add(other) {
+                if (other instanceof LinearExpr) {
+                    return new LinearExpr(this.coeff.add(other.coeff), this.constVal.add(other.constVal));
+                }
+                const frac = other instanceof Fraction ? other : new Fraction(other);
+                return new LinearExpr(this.coeff, this.constVal.add(frac));
+            }
+
+            sub(other) {
+                if (other instanceof LinearExpr) {
+                    return new LinearExpr(this.coeff.sub(other.coeff), this.constVal.sub(other.constVal));
+                }
+                const frac = other instanceof Fraction ? other : new Fraction(other);
+                return new LinearExpr(this.coeff, this.constVal.sub(frac));
+            }
+
+            mul(scalar) {
+                const frac = scalar instanceof Fraction ? scalar : new Fraction(scalar);
+                return new LinearExpr(this.coeff.mul(frac), this.constVal.mul(frac));
+            }
+
+            div(scalar) {
+                const frac = scalar instanceof Fraction ? scalar : new Fraction(scalar);
+                return new LinearExpr(this.coeff.div(frac), this.constVal.div(frac));
+            }
+
+            toLaTeX() {
+                if (this.coeff.isZero() && this.constVal.isZero()) return '0';
+
+                let parts = [];
+
+                if (!this.coeff.isZero()) {
+                    if (this.coeff.d === 1) {
+                        if (this.coeff.n === 1) parts.push('x');
+                        else if (this.coeff.n === -1) parts.push('-x');
+                        else parts.push(`${this.coeff.n}x`);
+                    } else {
+                        const absN = Math.abs(this.coeff.n);
+                        const numStr = absN === 1 ? 'x' : `${absN}x`;
+                        const sign = this.coeff.n < 0 ? '-' : '';
+                        parts.push(`${sign}\\frac{${numStr}}{${this.coeff.d}}`);
+                    }
+                }
+
+                if (!this.constVal.isZero() || parts.length === 0) {
+                    if (parts.length === 0) {
+                        parts.push(this.constVal.toLaTeX());
+                    } else {
+                        if (this.constVal.isNegative()) {
+                            parts.push(`- ${new Fraction(Math.abs(this.constVal.n), this.constVal.d).toLaTeX()}`);
+                        } else {
+                            parts.push(`+ ${this.constVal.toLaTeX()}`);
+                        }
+                    }
+                }
+
+                return parts.join(' ');
+            }
+
+            toString() {
+                if (this.coeff.isZero() && this.constVal.isZero()) return '0';
+                let parts = [];
+
+                if (!this.coeff.isZero()) {
+                    if (this.coeff.d === 1) {
+                        if (this.coeff.n === 1) parts.push('x');
+                        else if (this.coeff.n === -1) parts.push('-x');
+                        else parts.push(`${this.coeff.n}x`);
+                    } else {
+                        const absN = Math.abs(this.coeff.n);
+                        const numStr = absN === 1 ? 'x' : `${absN}x`;
+                        const sign = this.coeff.n < 0 ? '-' : '';
+                        parts.push(`${sign}${numStr}/${this.coeff.d}`);
+                    }
+                }
+
+                if (!this.constVal.isZero() || parts.length === 0) {
+                    if (parts.length === 0) {
+                        parts.push(this.constVal.toString());
+                    } else {
+                        if (this.constVal.isNegative()) {
+                            parts.push(`- ${new Fraction(Math.abs(this.constVal.n), this.constVal.d).toString()}`);
+                        } else {
+                            parts.push(`+ ${this.constVal.toString()}`);
+                        }
+                    }
+                }
+
+                return parts.join(' ');
+            }
+        }
+
+        function parseFractionStr(str) {
+            if (!str) return new Fraction(0);
+            str = str.trim().replace(/\s+/g, '').replace(/÷/g, '/').replace(/×/g, '*');
+            if (!str) return new Fraction(0);
+
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length !== 2) throw new Error("無效的分數格式");
+                const numFrac = parseFractionStr(parts[0]);
+                const denFrac = parseFractionStr(parts[1]);
+                return numFrac.div(denFrac);
+            }
+
+            if (str.includes('.')) {
+                const val = parseFloat(str);
+                if (isNaN(val)) throw new Error("無效的小數");
+                const absStr = Math.abs(val).toString();
+                if (absStr.includes('.')) {
+                    const decLen = absStr.split('.')[1].length;
+                    const den = Math.pow(10, Math.min(decLen, 6));
+                    const num = Math.round(val * den);
+                    return new Fraction(num, den);
+                } else {
+                    return new Fraction(Math.round(val));
+                }
+            }
+
+            const val = parseInt(str, 10);
+            if (isNaN(val)) throw new Error("無效的數字");
+            return new Fraction(val);
+        }
+
+        function parseLinearExprString(str) {
+            if (!str || typeof str !== 'string') throw new Error("無效的代數式");
+            let s = str.trim().replace(/\s+/g, '').replace(/÷/g, '/').replace(/×/g, '*');
+            if (!s) return new LinearExpr(0, 0);
+
+            const parenDivMatch = s.match(/^\((.+)\)\/(-?\d+(?:\.\d+)?)$/);
+            if (parenDivMatch) {
+                const subExpr = parseLinearExprString(parenDivMatch[1]);
+                const divisor = parseFractionStr(parenDivMatch[2]);
+                return subExpr.div(divisor);
+            }
+
+            s = s.replace(/(-?\d*(?:\.\d+)?)\(([^)]+)\)/g, (match, kStr, inner) => {
+                let k;
+                if (kStr === '' || kStr === '+') k = new Fraction(1);
+                else if (kStr === '-') k = new Fraction(-1);
+                else k = parseFractionStr(kStr);
+
+                const innerExpr = parseLinearExprString(inner);
+                const multExpr = innerExpr.mul(k);
+                let coeffN = multExpr.coeff.n, coeffD = multExpr.coeff.d;
+                let constN = multExpr.constVal.n, constD = multExpr.constVal.d;
+                let res = '';
+                if (coeffN !== 0) {
+                    if (coeffD === 1) {
+                        if (coeffN === 1) res += '+x';
+                        else if (coeffN === -1) res += '-x';
+                        else res += (coeffN > 0 ? '+' : '') + coeffN + 'x';
+                    } else {
+                        res += (coeffN > 0 ? '+' : '') + coeffN + 'x/' + coeffD;
+                    }
+                }
+                if (constN !== 0) {
+                    if (constD === 1) {
+                        res += (constN > 0 ? '+' : '') + constN;
+                    } else {
+                        res += (constN > 0 ? '+' : '') + constN + '/' + constD;
+                    }
+                }
+                return res || '+0';
+            });
+
+            if (!s.startsWith('+') && !s.startsWith('-')) {
+                s = '+' + s;
+            }
+
+            const tokens = s.match(/[+-][^+-]+/g);
+            if (!tokens) throw new Error("代數式格式不正確");
+
+            let totalCoeff = new Fraction(0);
+            let totalConst = new Fraction(0);
+
+            for (let token of tokens) {
+                token = token.trim();
+                if (!token) continue;
+
+                if (token.includes('x')) {
+                    let sign = token.startsWith('-') ? -1 : 1;
+                    let body = token.substring(1);
+
+                    let coeffStr = body.replace('x', '');
+                    if (coeffStr === '') coeffStr = '1';
+                    else if (coeffStr.startsWith('/')) coeffStr = '1' + coeffStr;
+
+                    let coeff = parseFractionStr(coeffStr).mul(sign);
+                    totalCoeff = totalCoeff.add(coeff);
+                } else {
+                    let frac = parseFractionStr(token);
+                    totalConst = totalConst.add(frac);
+                }
+            }
+
+            return new LinearExpr(totalCoeff, totalConst);
+        }
+
+        let allowSmartSuggestionClick = false;
+        let showSmartSuggestions = false;
+
+        // Tracking indices to avoid repeated questions
+        let completedIndices = { '1': [], '2': [], '3': [], '4': [], '5': [] };
+
+        let state = {
+            level: '1',
+            initialLHSStr: '',
+            initialRHSStr: '',
+            initialLHS: null,
+            initialRHS: null,
+            lhs: null,
+            rhs: null,
+            history: [],
+            solved: false,
+            isManualMode: true,
+            pendingStep: null
+        };
+
+        function evaluateComplexity(lhs, rhs) {
+            let score = 0;
+            const lCoeff = lhs.coeff;
+            const lConst = lhs.constVal;
+            const rCoeff = rhs.coeff;
+            const rConst = rhs.constVal;
+
+            const lHasX = !lCoeff.isZero();
+            const rHasX = !rCoeff.isZero();
+
+            if (lHasX && rHasX) {
+                score += 10;
+            } else if (lHasX || rHasX) {
+                const xCoeff = lHasX ? lCoeff : rCoeff;
+                if (xCoeff.isOne()) {
+                    score += 0;
+                } else if (xCoeff.n === -1 && xCoeff.d === 1) {
+                    score += 2;
+                } else if (xCoeff.d === 1) {
+                    score += 4;
+                } else {
+                    score += 7;
+                }
+            }
+
+            const lHasC = !lConst.isZero();
+            const rHasC = !rConst.isZero();
+
+            if (lHasC && rHasC) {
+                score += 8;
+            } else if (lHasC || rHasC) {
+                const constWithX = (lHasX && lHasC) || (rHasX && rHasC);
+                if (constWithX && (lHasX !== rHasX)) {
+                    score += 5;
+                } else if (!constWithX && (lHasX !== rHasX)) {
+                    score += 1;
+                } else {
+                    score += 4;
+                }
+            }
+
+            [lCoeff, lConst, rCoeff, rConst].forEach(f => {
+                if (f.d > 1) {
+                    score += 4 + Math.min(6, Math.log2(f.d) * 2);
+                }
+                if (Math.abs(f.n) > 20) {
+                    score += Math.min(5, Math.log10(Math.abs(f.n)));
+                }
+            });
+
+            return score;
+        }
+
+        // Expanded Preset Problems Pool (30 per level)
+        const LEVEL_PRESETS = {
+            '1': [
+                { lhs: 'x + 3', rhs: '7' }, { lhs: 'x - 5', rhs: '12' }, { lhs: '2x', rhs: '10' },
+                { lhs: 'x/3', rhs: '4' }, { lhs: 'x + 8', rhs: '3' }, { lhs: 'x - 9', rhs: '2' },
+                { lhs: '4x', rhs: '24' }, { lhs: 'x/5', rhs: '6' }, { lhs: 'x + 12', rhs: '25' },
+                { lhs: 'x - 7', rhs: '-4' }, { lhs: '5x', rhs: '-35' }, { lhs: 'x/2', rhs: '-9' },
+                { lhs: 'x + 15', rhs: '0' }, { lhs: 'x - 11', rhs: '-11' }, { lhs: '3x', rhs: '21' },
+                { lhs: 'x/4', rhs: '7' }, { lhs: 'x + 6', rhs: '-10' }, { lhs: 'x - 14', rhs: '8' },
+                { lhs: '6x', rhs: '54' }, { lhs: 'x/7', rhs: '3' }, { lhs: 'x + 19', rhs: '40' },
+                { lhs: 'x - 20', rhs: '-5' }, { lhs: '8x', rhs: '64' }, { lhs: 'x/6', rhs: '-8' },
+                { lhs: 'x + 25', rhs: '10' }, { lhs: 'x - 18', rhs: '12' }, { lhs: '7x', rhs: '-42' },
+                { lhs: 'x/9', rhs: '5' }, { lhs: 'x + 30', rhs: '-15' }, { lhs: '9x', rhs: '81' }
+            ],
+            '2': [
+                { lhs: '2x + 5', rhs: '15' }, { lhs: '3x - 7', rhs: '14' }, { lhs: 'x/2 + 3', rhs: '8' },
+                { lhs: '4x - 9', rhs: '11' }, { lhs: '5 + 2x', rhs: '19' }, { lhs: '3x + 8', rhs: '23' },
+                { lhs: '5x - 6', rhs: '24' }, { lhs: 'x/3 - 4', rhs: '2' }, { lhs: '6x + 7', rhs: '31' },
+                { lhs: '2x - 11', rhs: '5' }, { lhs: '7x + 4', rhs: '-10' }, { lhs: 'x/4 + 5', rhs: '9' },
+                { lhs: '8 - 3x', rhs: '2' }, { lhs: '4x + 13', rhs: '1' }, { lhs: 'x/5 - 3', rhs: '4' },
+                { lhs: '9x - 15', rhs: '12' }, { lhs: '10 + 3x', rhs: '1' }, { lhs: '2x + 17', rhs: '25' },
+                { lhs: '5x - 18', rhs: '12' }, { lhs: 'x/6 + 2', rhs: '7' }, { lhs: '7x - 5', rhs: '16' },
+                { lhs: '12 - 4x', rhs: '0' }, { lhs: '3x + 14', rhs: '-1' }, { lhs: 'x/7 - 1', rhs: '3' },
+                { lhs: '8x + 9', rhs: '25' }, { lhs: '6x - 13', rhs: '17' }, { lhs: '15 + 2x', rhs: '27' },
+                { lhs: 'x/8 + 4', rhs: '10' }, { lhs: '4x - 21', rhs: '-5' }, { lhs: '5x + 12', rhs: '-13' }
+            ],
+            '3': [
+                { lhs: '3x + 2', rhs: 'x + 10' }, { lhs: '5x - 4', rhs: '2x + 11' }, { lhs: '4x + 7', rhs: '6x - 3' },
+                { lhs: 'x + 12', rhs: '3x + 2' }, { lhs: '7 - 2x', rhs: 'x + 1' }, { lhs: '6x + 5', rhs: '2x + 21' },
+                { lhs: '8x - 3', rhs: '3x + 22' }, { lhs: '5x + 9', rhs: '9x - 7' }, { lhs: '2x + 15', rhs: '5x + 3' },
+                { lhs: '7x - 8', rhs: '4x + 10' }, { lhs: '9x + 1', rhs: '6x + 19' }, { lhs: '3x - 10', rhs: '8x + 15' },
+                { lhs: '10x + 4', rhs: '7x + 25' }, { lhs: '4x - 12', rhs: 'x + 6' }, { lhs: '2x + 18', rhs: '7x - 2' },
+                { lhs: '5x + 3', rhs: '3x + 17' }, { lhs: '6x - 9', rhs: '2x + 15' }, { lhs: '11x + 2', rhs: '5x + 38' },
+                { lhs: '3x + 20', rhs: '8x - 5' }, { lhs: '7x - 4', rhs: '2x + 26' }, { lhs: '4x + 15', rhs: '9x - 10' },
+                { lhs: '8x + 6', rhs: '5x + 21' }, { lhs: '12 - 3x', rhs: '2x + 2' }, { lhs: '5x - 14', rhs: 'x + 10' },
+                { lhs: '9x + 8', rhs: '3x + 44' }, { lhs: '2x + 25', rhs: '6x + 1' }, { lhs: '7x - 11', rhs: '3x + 13' },
+                { lhs: '10x - 6', rhs: '4x + 18' }, { lhs: '6x + 14', rhs: '8x - 2' }, { lhs: '15 - 4x', rhs: 'x + 5' }
+            ],
+            '4': [
+                { lhs: '2(x + 3)', rhs: '16' }, { lhs: '3(x - 2) + 4', rhs: '19' }, { lhs: '-2(x - 5)', rhs: '14' },
+                { lhs: '4 - (x + 2)', rhs: '7' }, { lhs: '-3(2x - 1)', rhs: '15' }, { lhs: '5(x + 1)', rhs: '25' },
+                { lhs: '2(3x - 4)', rhs: '10' }, { lhs: '4(x - 3) - 2', rhs: '18' }, { lhs: '6(x + 2)', rhs: '3x + 21' },
+                { lhs: '-4(x + 3)', rhs: '-20' }, { lhs: '3(2x + 5)', rhs: '27' }, { lhs: '7 - 2(x + 1)', rhs: '1' },
+                { lhs: '5(2x - 3)', rhs: '25' }, { lhs: '8 + 3(x - 4)', rhs: '11' }, { lhs: '-2(3x + 1)', rhs: '10' },
+                { lhs: '4(2x - 1)', rhs: '3(x + 2)' }, { lhs: '6 - (2x - 4)', rhs: '12' }, { lhs: '3(x + 4)', rhs: '2(x + 9)' },
+                { lhs: '-5(x - 2)', rhs: '15' }, { lhs: '2(4x + 3) - 5', rhs: '17' }, { lhs: '7(x - 1)', rhs: '4x + 11' },
+                { lhs: '4(3 - x)', rhs: '8' }, { lhs: '9 - 2(x - 3)', rhs: '15' }, { lhs: '3(5x + 2)', rhs: '36' },
+                { lhs: '-3(x + 6)', rhs: '-21' }, { lhs: '2(x - 7) + 10', rhs: '0' }, { lhs: '5(x + 3)', rhs: '2(x + 12)' },
+                { lhs: '8 - (3x + 1)', rhs: '1' }, { lhs: '4(x + 5) - 3x', rhs: '23' }, { lhs: '-2(4x - 3)', rhs: '22' }
+            ],
+            '5': [
+                { lhs: '(2x + 7)/3', rhs: '5' }, { lhs: '(x + 3)/2', rhs: '5' }, { lhs: '(3x - 4)/2', rhs: '7' },
+                { lhs: '(2x - 1)/3', rhs: '(x + 2)/2' }, { lhs: '(5x + 1)/3', rhs: '7' }, { lhs: 'x/2 + x/3', rhs: '10' },
+                { lhs: '(x - 4)/3', rhs: '4' }, { lhs: '(4x - 6)/5', rhs: '2' }, { lhs: '(3x + 1)/4', rhs: '7' },
+                { lhs: '2x/3 - 1', rhs: 'x/2 + 1' }, { lhs: '(2x + 5)/3', rhs: '(x + 8)/2' }, { lhs: '(2x + 11)/4', rhs: '5' },
+                { lhs: 'x/2 + 3/4', rhs: '7/4' }, { lhs: '(4x - 2)/5', rhs: '2' }, { lhs: '(3x - 5)/2', rhs: '8' },
+                { lhs: '(x + 6)/4', rhs: '(2x - 1)/3' }, { lhs: '2x/5 - 3', rhs: '1' }, { lhs: 'x/3 + x/4', rhs: '14' },
+                { lhs: '(5x - 3)/2', rhs: '11' }, { lhs: '3x/2 + x/4', rhs: '7' }, { lhs: '(x - 1)/2 + (x + 1)/3', rhs: '4' },
+                { lhs: '(6x - 2)/4', rhs: '4' }, { lhs: '(3x - 5)/4', rhs: '(x + 1)/2' }, { lhs: '(5x + 4)/6', rhs: '4' },
+                { lhs: '(2x + 3)/5', rhs: '3' }, { lhs: '5x/4 - 1', rhs: 'x/2 + 2' }, { lhs: '(x + 2)/3 - 1', rhs: '2' },
+                { lhs: '(4x - 3)/3', rhs: '5' }, { lhs: '(4x + 1)/3', rhs: '(3x + 4)/2' }, { lhs: 'x/4 + x/2', rhs: '9' }
+            ]
+        };
+
+        function getNextUnplayedIndex(lvlKey) {
+            const list = LEVEL_PRESETS[lvlKey];
+            if (!completedIndices[lvlKey]) completedIndices[lvlKey] = [];
+
+            let unplayed = [];
+            for (let i = 0; i < list.length; i++) {
+                if (!completedIndices[lvlKey].includes(i)) {
+                    unplayed.push(i);
+                }
+            }
+
+            if (unplayed.length === 0) {
+                completedIndices[lvlKey] = [];
+                showToast(`🎉 恭喜完成 L${lvlKey} 全部 ${list.length} 道題目！已為您重置題目池。`);
+                for (let i = 0; i < list.length; i++) unplayed.push(i);
+            }
+
+            const chosenIndex = unplayed[Math.floor(Math.random() * unplayed.length)];
+            completedIndices[lvlKey].push(chosenIndex);
+            return chosenIndex;
+        }
+
+        function toggleManualMode() {
+            state.isManualMode = !state.isManualMode;
+            updateManualToggleUI();
+            if (state.isManualMode) {
+                showToast("已啟動「手動化簡模式」！每一步需手動化簡兩邊。");
+            } else {
+                showToast("已切換為「自動化簡模式」。");
+            }
+        }
+
+        function updateManualToggleUI() {
+            const toggleBtn = document.getElementById('btn-manual-toggle');
+            const toggleDot = document.getElementById('manual-toggle-dot');
+            if (!toggleBtn || !toggleDot) return;
+            if (state.isManualMode) {
+                toggleBtn.classList.remove('bg-slate-700');
+                toggleBtn.classList.add('bg-indigo-600');
+                toggleDot.classList.remove('translate-x-0');
+                toggleDot.classList.add('translate-x-4');
+            } else {
+                toggleBtn.classList.remove('bg-indigo-600');
+                toggleBtn.classList.add('bg-slate-700');
+                toggleDot.classList.remove('translate-x-4');
+                toggleDot.classList.add('translate-x-0');
+            }
+        }
+
+        function setLevel(lvl) {
+            state.level = lvl;
+
+            ['1', '2', '3', '4', '5', 'random', 'custom'].forEach(b => {
+                const btn = document.getElementById(`btn-lvl-${b}`);
+                if (btn) {
+                    if (b === lvl) btn.classList.add('lvl-btn-active');
+                    else btn.classList.remove('lvl-btn-active');
+                }
+            });
+
+            const levelBadge = document.getElementById('level-badge');
+            const levelNames = {
+                '1': 'L1 一步方程', '2': 'L2 兩步方程', '3': 'L3 雙邊未知數',
+                '4': 'L4 括號與負數', '5': 'L5 分數綜合題', 'random': '隨機挑戰模式', 'custom': '自訂方程式'
+            };
+            if (levelBadge) levelBadge.innerText = levelNames[lvl] || '關卡模式';
+
+            if (lvl === 'custom') return;
+
+            let problem;
+            let lvlKey = lvl;
+            if (lvl === 'random') {
+                const keys = ['1', '2', '3', '4', '5'];
+                lvlKey = keys[Math.floor(Math.random() * keys.length)];
+            }
+            const pIdx = getNextUnplayedIndex(lvlKey);
+            problem = LEVEL_PRESETS[lvlKey][pIdx];
+
+            setupEquation(problem.lhs, problem.rhs);
+        }
+
+        function setupEquation(lhsStr, rhsStr) {
+            try {
+                state.initialLHSStr = lhsStr;
+                state.initialRHSStr = rhsStr;
+                state.initialLHS = parseLinearExprString(lhsStr);
+                state.initialRHS = parseLinearExprString(rhsStr);
+                state.lhs = state.initialLHS.clone();
+                state.rhs = state.initialRHS.clone();
+                state.history = [];
+                state.solved = false;
+                state.pendingStep = null;
+                renderCurrentState();
+            } catch (err) {
+                showToast(`無法初始化方程式：${err.message}`);
+            }
+        }
+
+        function executeOp(op, valStr) {
+            if (state.solved) {
+                showToast("方程式已解出！若要重練請點擊「重來」或選擇下一題。");
+                return;
+            }
+
+            if (state.pendingStep && state.pendingStep.active) {
+                showToast("請先完成當前步驟的左式與右式化簡！");
+                return;
+            }
+
+            try {
+                let opLabel = '';
+                let appliedLHSLaTeX = '';
+                let appliedRHSLaTeX = '';
+
+                // Previous LaTeX representations
+                let prevLHSLaTeX = state.history.length === 0
+                    ? stringToLaTeX(state.initialLHSStr)
+                    : (state.history[state.history.length - 1].isPendingSimplify
+                        ? state.history[state.history.length - 1].appliedLHSLaTeX
+                        : state.history[state.history.length - 1].lhsLaTeX);
+
+                let prevRHSLaTeX = state.history.length === 0
+                    ? stringToLaTeX(state.initialRHSStr)
+                    : (state.history[state.history.length - 1].isPendingSimplify
+                        ? state.history[state.history.length - 1].appliedRHSLaTeX
+                        : state.history[state.history.length - 1].rhsLaTeX);
+
+                let nextLHS = state.lhs.clone();
+                let nextRHS = state.rhs.clone();
+
+                const prevComplexity = evaluateComplexity(state.lhs, state.rhs);
+
+                valStr = (valStr || '').trim();
+
+                if (op === '展開' || valStr === '展開' || valStr === '化簡') {
+                    opLabel = `展開 / 化簡同類項`;
+                    appliedLHSLaTeX = prevLHSLaTeX;
+                    appliedRHSLaTeX = prevRHSLaTeX;
+                    nextLHS = state.lhs.clone();
+                    nextRHS = state.rhs.clone();
+                } else {
+                    let parsedVal = null;
+                    let isVar = false;
+
+                    if (valStr.includes('x')) {
+                        isVar = true;
+                        parsedVal = parseLinearExprString(valStr);
+                    } else {
+                        parsedVal = parseFractionStr(valStr);
+                    }
+
+                    if (op === '+') {
+                        let valLaTeX = parsedVal.toLaTeX();
+                        let isNeg = isVar ? parsedVal.coeff.isNegative() || (parsedVal.coeff.isZero() && parsedVal.constVal.isNegative()) : parsedVal.isNegative();
+                        let valFormatted = isNeg ? `\\left(${valLaTeX}\\right)` : valLaTeX;
+
+                        opLabel = `兩邊同加 $${valLaTeX}$`;
+                        appliedLHSLaTeX = `${prevLHSLaTeX} + ${valFormatted}`;
+                        appliedRHSLaTeX = `${prevRHSLaTeX} + ${valFormatted}`;
+
+                        nextLHS = state.lhs.add(parsedVal);
+                        nextRHS = state.rhs.add(parsedVal);
+
+                    } else if (op === '-') {
+                        let valLaTeX = parsedVal.toLaTeX();
+                        let isNeg = isVar ? parsedVal.coeff.isNegative() || (parsedVal.coeff.isZero() && parsedVal.constVal.isNegative()) : parsedVal.isNegative();
+                        let valFormatted = isNeg ? `\\left(${valLaTeX}\\right)` : valLaTeX;
+
+                        opLabel = `兩邊同減 $${valLaTeX}$`;
+                        appliedLHSLaTeX = `${prevLHSLaTeX} - ${valFormatted}`;
+                        appliedRHSLaTeX = `${prevRHSLaTeX} - ${valFormatted}`;
+
+                        nextLHS = state.lhs.sub(parsedVal);
+                        nextRHS = state.rhs.sub(parsedVal);
+
+                    } else if (op === '*') {
+                        if (isVar) {
+                            showToast("本實驗室暫不支援同乘包含未知數的式子！");
+                            return;
+                        }
+                        if (parsedVal.isZero()) {
+                            showToast("不能兩邊同乘以 0！");
+                            return;
+                        }
+
+                        let valLaTeX = parsedVal.toLaTeX();
+                        let isNeg = parsedVal.isNegative();
+                        let multiplierLaTeX = isNeg ? `\\left(${valLaTeX}\\right)` : valLaTeX;
+
+                        opLabel = `兩邊同乘 $${valLaTeX}$`;
+                        appliedLHSLaTeX = `${multiplierLaTeX}\\left(${prevLHSLaTeX}\\right)`;
+                        appliedRHSLaTeX = `${multiplierLaTeX}\\left(${prevRHSLaTeX}\\right)`;
+
+                        nextLHS = state.lhs.mul(parsedVal);
+                        nextRHS = state.rhs.mul(parsedVal);
+
+                    } else if (op === '/') {
+                        if (isVar) {
+                            showToast("本實驗室暫不支援同除包含未知數的式子！");
+                            return;
+                        }
+                        if (parsedVal.isZero()) {
+                            showToast("不能兩邊同除以 0！");
+                            return;
+                        }
+
+                        let valLaTeX = parsedVal.toLaTeX();
+
+                        opLabel = `兩邊同除 $${valLaTeX}$`;
+                        appliedLHSLaTeX = `\\frac{${prevLHSLaTeX}}{${valLaTeX}}`;
+                        appliedRHSLaTeX = `\\frac{${prevRHSLaTeX}}{${valLaTeX}}`;
+
+                        nextLHS = state.lhs.div(parsedVal);
+                        nextRHS = state.rhs.div(parsedVal);
+                    }
+                }
+
+                const nextComplexity = evaluateComplexity(nextLHS, nextRHS);
+                let stepScore = 1;
+                let scoreReason = "使方程複雜程度不變";
+
+                if (nextComplexity < prevComplexity - 0.8) {
+                    stepScore = 2;
+                    scoreReason = "使方程簡單化";
+                } else if (nextComplexity > prevComplexity + 0.8) {
+                    stepScore = 0;
+                    scoreReason = "使方程更複雜";
+                }
+
+                state.lhs = nextLHS;
+                state.rhs = nextRHS;
+
+                if (state.isManualMode) {
+                    state.pendingStep = {
+                        active: true,
+                        targetLHS: nextLHS.clone(),
+                        targetRHS: nextRHS.clone(),
+                        lhsDone: false,
+                        rhsDone: false,
+                        lhsWrongAnswers: [],
+                        rhsWrongAnswers: [],
+                        lhsMsg: '',
+                        rhsMsg: '',
+                        lhsLastInput: '',
+                        rhsLastInput: ''
+                    };
+
+                    state.history.push({
+                        opLabel: opLabel,
+                        appliedLHSLaTeX: appliedLHSLaTeX,
+                        appliedRHSLaTeX: appliedRHSLaTeX,
+                        lhsLaTeX: nextLHS.toLaTeX(),
+                        rhsLaTeX: nextRHS.toLaTeX(),
+                        lhs: nextLHS.clone(),
+                        rhs: nextRHS.clone(),
+                        stepScore: stepScore,
+                        scoreReason: scoreReason,
+                        isPendingSimplify: true
+                    });
+                } else {
+                    state.pendingStep = null;
+                    state.history.push({
+                        opLabel: opLabel,
+                        appliedLHSLaTeX: appliedLHSLaTeX,
+                        appliedRHSLaTeX: appliedRHSLaTeX,
+                        lhsLaTeX: nextLHS.toLaTeX(),
+                        rhsLaTeX: nextRHS.toLaTeX(),
+                        lhs: nextLHS.clone(),
+                        rhs: nextRHS.clone(),
+                        stepScore: stepScore,
+                        scoreReason: scoreReason,
+                        isPendingSimplify: false
+                    });
+                }
+
+                renderCurrentState();
+
+                if (!state.isManualMode) {
+                    checkSolvedCondition();
+                }
+
+            } catch (err) {
+                showToast(`運算錯誤：${err.message}`);
+            }
+        }
+
+        function submitManualSimplify(e, side, stepIdx) {
+            if (e && e.preventDefault) e.preventDefault();
+            if (!state.pendingStep || !state.pendingStep.active) return;
+
+            const inputEl = document.getElementById(`manual-${side}-input-${stepIdx}`);
+            if (!inputEl) return;
+            const userValStr = inputEl.value.trim();
+
+            const isLhs = side === 'lhs';
+            if (isLhs) {
+                state.pendingStep.lhsLastInput = userValStr;
+            } else {
+                state.pendingStep.rhsLastInput = userValStr;
+            }
+
+            if (!userValStr) {
+                if (isLhs) state.pendingStep.lhsMsg = "請輸入結果！";
+                else state.pendingStep.rhsMsg = "請輸入結果！";
+                renderCurrentState();
+                return;
+            }
+
+            const targetExpr = isLhs ? state.pendingStep.targetLHS : state.pendingStep.targetRHS;
+            let isCorrect = false;
+
+            try {
+                const parsedUserExpr = parseLinearExprString(userValStr);
+                const diffCoeff = parsedUserExpr.coeff.sub(targetExpr.coeff);
+                const diffConst = parsedUserExpr.constVal.sub(targetExpr.constVal);
+
+                if (diffCoeff.isZero() && diffConst.isZero()) {
+                    isCorrect = true;
+                }
+            } catch (err) {
+                isCorrect = false;
+            }
+
+            if (isCorrect) {
+                if (isLhs) {
+                    state.pendingStep.lhsDone = true;
+                    state.pendingStep.lhsMsg = '';
+                } else {
+                    state.pendingStep.rhsDone = true;
+                    state.pendingStep.rhsMsg = '';
+                }
+
+                if (state.pendingStep.lhsDone && state.pendingStep.rhsDone) {
+                    state.pendingStep.active = false;
+                    if (state.history[stepIdx]) {
+                        state.history[stepIdx].isPendingSimplify = false;
+                    }
+                    checkSolvedCondition();
+                }
+            } else {
+                const normInput = userValStr.toLowerCase().replace(/\s+/g, '');
+                const wrongAnswersList = isLhs ? state.pendingStep.lhsWrongAnswers : state.pendingStep.rhsWrongAnswers;
+
+                if (!wrongAnswersList.includes(normInput)) {
+                    wrongAnswersList.push(normInput);
+                }
+
+                const distinctWrongCount = wrongAnswersList.length;
+                const msgKey = isLhs ? 'lhsMsg' : 'rhsMsg';
+
+                if (distinctWrongCount >= 3) {
+                    const answerLaTeX = targetExpr.toLaTeX();
+                    state.pendingStep[msgKey] = `答案：<span class="font-math font-bold text-amber-300">${katex.renderToString(answerLaTeX)}</span>`;
+                } else {
+                    state.pendingStep[msgKey] = `不正確 (${distinctWrongCount}/3 次)`;
+                }
+
+                // 清空不正確輸入
+                if (isLhs) {
+                    state.pendingStep.lhsLastInput = '';
+                } else {
+                    state.pendingStep.rhsLastInput = '';
+                }
+            }
+
+            renderCurrentState();
+        }
+
+        function renderCurrentState() {
+            const displayEl = document.getElementById('current-equation-display');
+            if (!displayEl) return;
+
+            document.getElementById('step-count-tag').innerText = `${state.history.length} 步驟`;
+
+            const totalScore = state.history.reduce((acc, step) => acc + (step.stepScore || 0), 0);
+            const scoreCountTag = document.getElementById('score-count-tag');
+            if (scoreCountTag) {
+                scoreCountTag.innerHTML = `<i class="fa-solid fa-star text-amber-400"></i> 總分: ${totalScore} 分`;
+            }
+
+            let html = '';
+
+            const initialLHSLaTeX = stringToLaTeX(state.initialLHSStr);
+            const initialRHSLaTeX = stringToLaTeX(state.initialRHSStr);
+
+            html += `
+                <div class="glass-card rounded-xl p-2.5 sm:p-3 border border-slate-800 animate-fadeIn">
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <div class="col-span-2">
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 truncate">
+                                初始題目
+                            </span>
+                        </div>
+                        <div class="col-span-10 flex items-center justify-center text-lg sm:text-xl font-math">
+                            <div class="flex-1 text-right pr-2">${katex.renderToString(initialLHSLaTeX)}</div>
+                            <div class="text-center font-bold px-1 text-indigo-400">=</div>
+                            <div class="flex-1 text-left pl-2">${katex.renderToString(initialRHSLaTeX)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            state.history.forEach((step, idx) => {
+                const isPending = step.isPendingSimplify && state.pendingStep && state.pendingStep.active;
+
+                let scoreBadgeClass = '';
+                if (step.stepScore === 2) {
+                    scoreBadgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+                } else if (step.stepScore === 1) {
+                    scoreBadgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+                } else {
+                    scoreBadgeClass = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+                }
+
+                html += `
+                    <div class="glass-card rounded-xl p-2.5 sm:p-3 border border-slate-800 space-y-2 animate-fadeIn">
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-2 flex flex-col items-start gap-1 truncate">
+                                <div class="flex items-center gap-1 flex-wrap">
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        步 ${idx + 1}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 px-1 py-0.5 rounded-md text-[9px] font-bold border ${scoreBadgeClass}" title="${step.scoreReason}">
+                                        ${step.stepScore}分
+                                    </span>
+                                </div>
+                                <div class="text-[9px] text-slate-400 truncate w-full" title="${step.opLabel}">${step.opLabel}</div>
+                            </div>
+                            <div class="col-span-10 flex items-center justify-center text-lg sm:text-xl font-math text-slate-300">
+                                <div class="flex-1 text-right pr-2">${katex.renderToString(step.appliedLHSLaTeX)}</div>
+                                <div class="text-center font-bold px-1 text-amber-400">=</div>
+                                <div class="flex-1 text-left pl-2">${katex.renderToString(step.appliedRHSLaTeX)}</div>
+                            </div>
+                        </div>
+
+                        ${isPending ? `
+                            <div class="grid grid-cols-12 gap-2 items-center pt-2 border-t border-slate-800/60 bg-indigo-950/30 p-2 rounded-xl border border-indigo-500/30">
+                                <div class="col-span-2">
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-500/40">
+                                        <i class="fa-solid fa-pen-clip"></i> 請化簡
+                                    </span>
+                                </div>
+                                <div class="col-span-10 grid grid-cols-2 gap-2 text-center items-center">
+                                    <div class="flex flex-col gap-1 items-center">
+                                        <span class="text-[10px] text-indigo-300 font-medium">左式化簡：</span>
+                                        ${state.pendingStep.lhsDone ? `
+                                            <div class="text-emerald-400 font-math font-bold text-sm bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-500/40 flex items-center gap-1">
+                                                <i class="fa-solid fa-circle-check text-xs"></i> ${katex.renderToString(state.pendingStep.targetLHS.toLaTeX())}
+                                            </div>
+                                        ` : `
+                                            <form onsubmit="submitManualSimplify(event, 'lhs', ${idx})" class="flex flex-col items-center gap-1 w-full">
+                                                <div class="flex items-center gap-1 w-full">
+                                                    <input type="text" id="manual-lhs-input-${idx}" inputmode="none" onfocus="lastFocusedInput = this" value="${state.pendingStep.lhsLastInput || ''}" placeholder="如 2x" class="w-full bg-slate-950 border border-indigo-500/50 rounded-lg px-2 py-1 text-xs text-white text-center font-math focus:outline-none focus:border-indigo-400" autocomplete="off">
+                                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] px-2 py-1 rounded-lg transition flex-shrink-0">確認</button>
+                                                </div>
+                                                ${state.pendingStep.lhsMsg ? `<div class="text-[10px] text-rose-400 font-medium mt-0.5 text-center font-sans">${state.pendingStep.lhsMsg}</div>` : ''}
+                                            </form>
+                                        `}
+                                    </div>
+
+                                    <div class="flex flex-col gap-1 items-center">
+                                        <span class="text-[10px] text-indigo-300 font-medium">右式化簡：</span>
+                                        ${state.pendingStep.rhsDone ? `
+                                            <div class="text-emerald-400 font-math font-bold text-sm bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-500/40 flex items-center gap-1">
+                                                <i class="fa-solid fa-circle-check text-xs"></i> ${katex.renderToString(state.pendingStep.targetRHS.toLaTeX())}
+                                            </div>
+                                        ` : `
+                                            <form onsubmit="submitManualSimplify(event, 'rhs', ${idx})" class="flex flex-col items-center gap-1 w-full">
+                                                <div class="flex items-center gap-1 w-full">
+                                                    <input type="text" id="manual-rhs-input-${idx}" inputmode="none" onfocus="lastFocusedInput = this" value="${state.pendingStep.rhsLastInput || ''}" placeholder="如 2" class="w-full bg-slate-950 border border-indigo-500/50 rounded-lg px-2 py-1 text-xs text-white text-center font-math focus:outline-none focus:border-indigo-400" autocomplete="off">
+                                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] px-2 py-1 rounded-lg transition flex-shrink-0">確認</button>
+                                                </div>
+                                                ${state.pendingStep.rhsMsg ? `<div class="text-[10px] text-rose-400 font-medium mt-0.5 text-center font-sans">${state.pendingStep.rhsMsg}</div>` : ''}
+                                            </form>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="grid grid-cols-12 gap-2 items-center pt-2 border-t border-slate-800/60">
+                                <div class="col-span-2">
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        <i class="fa-solid fa-check"></i> 化簡結果
+                                    </span>
+                                </div>
+                                <div class="col-span-10 flex items-center justify-center text-lg sm:text-xl font-math text-emerald-400 font-bold">
+                                    <div class="flex-1 text-right pr-2">${katex.renderToString(step.lhsLaTeX)}</div>
+                                    <div class="text-center font-bold px-1 text-emerald-400">=</div>
+                                    <div class="flex-1 text-left pl-2">${katex.renderToString(step.rhsLaTeX)}</div>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            });
+
+            displayEl.innerHTML = html;
+
+            if (state.solved) {
+                const summaryInitialStr = `${katex.renderToString(stringToLaTeX(state.initialLHSStr))} = ${katex.renderToString(stringToLaTeX(state.initialRHSStr))}`;
+                const summaryFinalStr = `${katex.renderToString(state.lhs.toLaTeX())} = ${katex.renderToString(state.rhs.toLaTeX())}`;
+                const avgScore = state.history.length > 0 ? (totalScore / state.history.length).toFixed(1) : '0.0';
+
+                const successCardHTML = `
+                    <div id="success-inline-card" class="glass-card rounded-2xl p-4 border border-emerald-500/50 bg-emerald-950/20 text-center relative overflow-hidden animate-fadeIn glow-success mt-3">
+                        <canvas id="confetti-canvas" class="absolute inset-0 pointer-events-none w-full h-full rounded-2xl"></canvas>
+                        <div class="relative z-10 flex flex-col items-center gap-2">
+                            <div class="w-11 h-11 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center border border-emerald-500/40 text-lg shadow-lg">
+                                <i class="fa-solid fa-trophy"></i>
+                            </div>
+                            <h3 class="text-base font-black text-white">恭喜成功解出方程式！</h3>
+                            <p class="text-[11px] text-emerald-200/80">方程已完全化簡為最簡已知解。</p>
+                            <div class="w-full bg-slate-950/80 rounded-xl p-3 border border-slate-800/80 my-1 text-left space-y-1.5 text-xs">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">初始題目：</span>
+                                    <span class="font-math font-bold text-slate-200">${summaryInitialStr}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">最終解：</span>
+                                    <span class="font-math font-extrabold text-emerald-400">${summaryFinalStr}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">總使用步驟：</span>
+                                    <span class="font-bold text-indigo-300">${state.history.length} 步</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-1 border-t border-slate-800">
+                                    <span class="text-slate-400">解題總評分 / 平均效率：</span>
+                                    <span class="font-extrabold text-amber-300 flex items-center gap-1">
+                                        <i class="fa-solid fa-star text-amber-400"></i> ${totalScore} 分 (平均 ${avgScore}分/步)
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 w-full mt-1">
+                                <button onclick="resetEquation()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-arrows-rotate text-[10px]"></i> 再解一次
+                                </button>
+                                <button onclick="nextProblem()" class="flex-1 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-forward text-[10px]"></i> 下一題
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                displayEl.innerHTML += successCardHTML;
+            }
+
+            displayEl.scrollTop = displayEl.scrollHeight;
+
+            renderSmartSuggestions();
+
+            setTimeout(() => {
+                if (state.pendingStep && state.pendingStep.active) {
+                    const stepIdx = state.history.length - 1;
+                    if (!state.pendingStep.lhsDone) {
+                        const el = document.getElementById(`manual-lhs-input-${stepIdx}`);
+                        if (el) { el.focus(); lastFocusedInput = el; }
+                    } else if (!state.pendingStep.rhsDone) {
+                        const el = document.getElementById(`manual-rhs-input-${stepIdx}`);
+                        if (el) { el.focus(); lastFocusedInput = el; }
+                    }
+                }
+            }, 50);
+        }
+
+        function renderSmartSuggestions() {
+            const grid = document.getElementById('smart-actions-grid');
+            if (!grid) return;
+
+            if (!showSmartSuggestions) {
+                grid.classList.add('hidden');
+                return;
+            } else {
+                grid.classList.remove('hidden');
+            }
+
+            grid.innerHTML = '';
+            const suggestions = [];
+
+            const lhs = state.lhs;
+            const rhs = state.rhs;
+
+            if (lhs.coeff.d > 1 || lhs.constVal.d > 1 || rhs.coeff.d > 1 || rhs.constVal.d > 1) {
+                const lcm = (a, b) => (a * b) / ((gcd = (x, y) => y === 0 ? x : gcd(y, x % y))(a, b));
+                let denomLCM = lcm(lcm(lhs.coeff.d, lhs.constVal.d), lcm(rhs.coeff.d, rhs.constVal.d));
+                if (denomLCM > 1) {
+                    suggestions.push({
+                        label: `兩邊 × ${denomLCM} (消分母)`,
+                        op: '*', val: `${denomLCM}`
+                    });
+                }
+            }
+
+            if (!rhs.coeff.isZero()) {
+                if (rhs.coeff.isNegative()) {
+                    let positiveCoeff = rhs.coeff.negate();
+                    suggestions.push({
+                        label: `兩邊 + ${new LinearExpr(positiveCoeff, 0).toString()} (消右未知數)`,
+                        op: '+', val: new LinearExpr(positiveCoeff, 0).toString()
+                    });
+                } else {
+                    suggestions.push({
+                        label: `兩邊 - ${rhs.coeff.d === 1 ? (rhs.coeff.n === 1 ? 'x' : `${rhs.coeff.n}x`) : `${rhs.coeff.n}x/${rhs.coeff.d}`} (消右未知數)`,
+                        op: '-', val: rhs.coeff.d === 1 ? (rhs.coeff.n === 1 ? 'x' : `${rhs.coeff.n}x`) : `${rhs.coeff.n}x/${rhs.coeff.d}`
+                    });
+                }
+            }
+
+            if (!lhs.constVal.isZero()) {
+                if (lhs.constVal.isNegative()) {
+                    let absConst = lhs.constVal.negate();
+                    suggestions.push({
+                        label: `兩邊 + ${absConst.toString()} (消左常數)`,
+                        op: '+', val: absConst.toString()
+                    });
+                } else {
+                    suggestions.push({
+                        label: `兩邊 - ${lhs.constVal.toString()} (消左常數)`,
+                        op: '-', val: lhs.constVal.toString()
+                    });
+                }
+            }
+
+            if (rhs.coeff.isZero() && !lhs.coeff.isZero() && !lhs.coeff.isOne()) {
+                if (lhs.coeff.d === 1) {
+                    suggestions.push({
+                        label: `兩邊 ÷ ${lhs.coeff.toString()} (化簡 x 係數)`,
+                        op: '/', val: lhs.coeff.toString()
+                    });
+                } else {
+                    suggestions.push({
+                        label: `兩邊 × ${lhs.coeff.d} (消分母)`,
+                        op: '*', val: `${lhs.coeff.d}`
+                    });
+                }
+            }
+
+            if (suggestions.length === 0) {
+                grid.innerHTML = `<div class="col-span-2 text-center text-xs text-slate-400 py-2">已是化簡狀態或可直接觀察得出解答！</div>`;
+                return;
+            }
+
+            suggestions.forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = `p-1.5 text-[11px] font-bold rounded-xl border transition flex items-center justify-between ${
+                    allowSmartSuggestionClick
+                        ? 'bg-indigo-950/60 border-indigo-500/40 text-indigo-200 hover:bg-indigo-600 hover:text-white'
+                        : 'bg-slate-900 border-slate-800 text-slate-500 cursor-not-allowed'
+                }`;
+                btn.innerHTML = `<span class="truncate"><i class="fa-solid fa-wand-magic-sparkles mr-1 text-amber-400"></i>${s.label}</span> <i class="fa-solid fa-chevron-right text-[9px] ml-1"></i>`;
+                btn.onclick = () => {
+                    if (!allowSmartSuggestionClick) {
+                        showToast("請於指令列或計算盤輸入算式解題！");
+                        return;
+                    }
+                    executeOp(s.op, s.val);
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        function toggleSmartSuggestions() {
+            showSmartSuggestions = !showSmartSuggestions;
+            const textEl = document.getElementById('text-toggle-smart');
+            const iconEl = document.getElementById('icon-toggle-smart');
+
+            if (showSmartSuggestions) {
+                textEl.innerText = "隱藏";
+                iconEl.className = "fa-solid fa-eye-slash";
+            } else {
+                textEl.innerText = "顯示";
+                iconEl.className = "fa-solid fa-eye";
+            }
+            renderSmartSuggestions();
+        }
+
+        function getTargetInput() {
+            if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.body.contains(document.activeElement)) {
+                return document.activeElement;
+            }
+            if (lastFocusedInput && document.body.contains(lastFocusedInput) && lastFocusedInput.tagName === 'INPUT') {
+                return lastFocusedInput;
+            }
+            if (state.pendingStep && state.pendingStep.active) {
+                const stepIdx = state.history.length - 1;
+                if (!state.pendingStep.lhsDone) {
+                    const lhsInput = document.getElementById(`manual-lhs-input-${stepIdx}`);
+                    if (lhsInput) return lhsInput;
+                }
+                if (!state.pendingStep.rhsDone) {
+                    const rhsInput = document.getElementById(`manual-rhs-input-${stepIdx}`);
+                    if (rhsInput) return rhsInput;
+                }
+            }
+            return document.getElementById('quick-cmd-input');
+        }
+
+        function appendCalcInput(char) {
+            const inputEl = getTargetInput();
+            if (!inputEl) return;
+            
+            const start = inputEl.selectionStart;
+            const end = inputEl.selectionEnd;
+            if (typeof start === 'number' && typeof end === 'number') {
+                const val = inputEl.value;
+                inputEl.value = val.substring(0, start) + char + val.substring(end);
+                inputEl.selectionStart = inputEl.selectionEnd = start + char.length;
+            } else {
+                inputEl.value += char;
+            }
+            inputEl.focus();
+        }
+
+        function clearCalcInput() {
+            const inputEl = getTargetInput();
+            if (!inputEl) return;
+            inputEl.value = '';
+            inputEl.focus();
+        }
+
+        function backspaceCalcInput() {
+            const inputEl = getTargetInput();
+            if (!inputEl) return;
+            
+            const start = inputEl.selectionStart;
+            const end = inputEl.selectionEnd;
+            if (typeof start === 'number' && typeof end === 'number') {
+                const val = inputEl.value;
+                if (start === end) {
+                    if (start > 0) {
+                        inputEl.value = val.substring(0, start - 1) + val.substring(start);
+                        inputEl.selectionStart = inputEl.selectionEnd = start - 1;
+                    }
+                } else {
+                    inputEl.value = val.substring(0, start) + val.substring(end);
+                    inputEl.selectionStart = inputEl.selectionEnd = start;
+                }
+            } else {
+                inputEl.value = inputEl.value.slice(0, -1);
+            }
+            inputEl.focus();
+        }
+
+        function handleKeypadSubmit(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const targetInput = getTargetInput();
+            if (!targetInput) return;
+
+            if (targetInput.id.startsWith('manual-lhs-input-')) {
+                const stepIdx = parseInt(targetInput.id.replace('manual-lhs-input-', ''), 10);
+                submitManualSimplify(e, 'lhs', stepIdx);
+                return;
+            }
+            if (targetInput.id.startsWith('manual-rhs-input-')) {
+                const stepIdx = parseInt(targetInput.id.replace('manual-rhs-input-', ''), 10);
+                submitManualSimplify(e, 'rhs', stepIdx);
+                return;
+            }
+
+            handleQuickCommandSubmit(e);
+        }
+
+        function handleQuickCommandSubmit(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const inputEl = document.getElementById('quick-cmd-input');
+            if (!inputEl) return;
+            let val = inputEl.value.trim();
+            if (!val) return;
+
+            if (val === '展開' || val === '化簡') {
+                executeOp('展開', '展開');
+                inputEl.value = '';
+                return;
+            }
+
+            let op = null;
+            let valStr = '';
+
+            val = val.replace(/加/g, '+')
+                     .replace(/減/g, '-')
+                     .replace(/乘/g, '*')
+                     .replace(/除/g, '/')
+                     .replace(/÷/g, '/')
+                     .replace(/×/g, '*');
+
+            if (val.startsWith('+')) {
+                op = '+';
+                valStr = val.substring(1);
+            } else if (val.startsWith('-')) {
+                op = '-';
+                valStr = val.substring(1);
+            } else if (val.startsWith('*')) {
+                op = '*';
+                valStr = val.substring(1);
+            } else if (val.startsWith('/')) {
+                op = '/';
+                valStr = val.substring(1);
+            } else {
+                showToast("請包含運算符號（例如：+4, -4, ×2, ÷3, 或 展開）");
+                return;
+            }
+
+            if (!valStr.trim() && op !== '展開') {
+                showToast("請輸入完整的運算內容！");
+                return;
+            }
+
+            executeOp(op, valStr.trim());
+            inputEl.value = '';
+        }
+
+        /**
+         * Opens Custom Modal and automatically triggers iOS Native Keyboard
+         */
+        function openCustomModal() {
+            const modal = document.getElementById('custom-modal');
+            if (modal) modal.classList.remove('hidden');
+            const input = document.getElementById('custom-equation-input');
+            if (input) {
+                setTimeout(() => {
+                    input.focus();
+                    lastFocusedInput = input;
+                }, 100);
+            }
+        }
+
+        function closeCustomModal() {
+            const modal = document.getElementById('custom-modal');
+            if (modal) modal.classList.add('hidden');
+            const errEl = document.getElementById('custom-modal-error');
+            if (errEl) errEl.classList.add('hidden');
+        }
+
+        function handleCustomEquationSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('custom-equation-input');
+            const errEl = document.getElementById('custom-modal-error');
+            if (!input) return;
+
+            const eqStr = input.value.trim();
+            if (!eqStr.includes('=')) {
+                if (errEl) {
+                    errEl.innerText = "方程式必須包含等號 '='！";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const parts = eqStr.split('=');
+            if (parts.length !== 2) {
+                if (errEl) {
+                    errEl.innerText = "方程式只能有一個等號 '='！";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            try {
+                setupEquation(parts[0], parts[1]);
+                state.level = 'custom';
+                const levelBadge = document.getElementById('level-badge');
+                if (levelBadge) levelBadge.innerText = '自訂方程式';
+
+                ['1', '2', '3', '4', '5', 'random', 'custom'].forEach(b => {
+                    const btn = document.getElementById(`btn-lvl-${b}`);
+                    if (btn) {
+                        if (b === 'custom') btn.classList.add('lvl-btn-active');
+                        else btn.classList.remove('lvl-btn-active');
+                    }
+                });
+
+                closeCustomModal();
+                input.value = '';
+            } catch (err) {
+                if (errEl) {
+                    errEl.innerText = `解析失敗：${err.message}`;
+                    errEl.classList.remove('hidden');
+                }
+            }
+        }
+
+        function undoStep() {
+            if (state.history.length === 0) {
+                showToast("已退回至最初步驟！");
+                return;
+            }
+            state.history.pop();
+            if (state.history.length === 0) {
+                state.lhs = state.initialLHS.clone();
+                state.rhs = state.initialRHS.clone();
+            } else {
+                const lastStep = state.history[state.history.length - 1];
+                state.lhs = lastStep.lhs.clone();
+                state.rhs = lastStep.rhs.clone();
+            }
+            state.solved = false;
+            state.pendingStep = null;
+            renderCurrentState();
+            showToast("已復原上一步");
+        }
+
+        function resetEquation() {
+            if (!state.initialLHS || !state.initialRHS) return;
+            state.lhs = state.initialLHS.clone();
+            state.rhs = state.initialRHS.clone();
+            state.history = [];
+            state.solved = false;
+            state.pendingStep = null;
+            renderCurrentState();
+            showToast("已重新開始此題");
+        }
+
+        function nextProblem() {
+            setLevel(state.level);
+        }
+
+        function showHint() {
+            const lhs = state.lhs;
+            const rhs = state.rhs;
+
+            if (state.solved) {
+                showToast("方程式已解出，無須提示！");
+                return;
+            }
+
+            if (!rhs.coeff.isZero()) {
+                showToast(`建議提示：先消去右邊的未知數項 ${rhs.coeff.d === 1 ? (rhs.coeff.n === 1 ? 'x' : rhs.coeff.n + 'x') : rhs.coeff.toLaTeX() + 'x'}`);
+            } else if (!lhs.constVal.isZero()) {
+                showToast(`建議提示：兩邊同加減常數，消去左邊的常數項 ${lhs.constVal.toString()}`);
+            } else if (!lhs.coeff.isOne() && !lhs.coeff.isZero()) {
+                showToast(`建議提示：兩邊同除以 x 的係數 ${lhs.coeff.toString()}`);
+            } else {
+                showToast("當前已是非常簡潔的型態，觀察等式兩邊即可完成！");
+            }
+        }
+
+        function checkSolvedCondition() {
+            const lhs = state.lhs;
+            const rhs = state.rhs;
+
+            if ((lhs.coeff.isOne() && lhs.constVal.isZero() && rhs.coeff.isZero()) ||
+                (rhs.coeff.isOne() && rhs.constVal.isZero() && lhs.coeff.isZero())) {
+                if (!state.solved) {
+                    state.solved = true;
+                    onProblemSolved(); // Trigger stats & medals check
+                    renderCurrentState();
+                    setTimeout(() => {
+                        triggerConfetti();
+                    }, 100);
+                }
+            }
+        }
+
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            if (!canvas || !canvas.parentElement) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const particles = [];
+            const colors = ['#818cf8', '#34d399', '#f472b6', '#fbbf24', '#60a5fa'];
+
+            for (let i = 0; i < 60; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 3,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.6) * 10,
+                    size: Math.random() * 5 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    decay: Math.random() * 0.02 + 0.015
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                particles.forEach(p => {
+                    if (p.alpha > 0) {
+                        alive = true;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.22;
+                        p.alpha -= p.decay;
+
+                        ctx.save();
+                        ctx.globalAlpha = Math.max(0, p.alpha);
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+
+                if (alive) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            animate();
+        }
+
+        window.onload = function() {
+            loadStats();
+            updateManualToggleUI();
+            setLevel('1');
+        };
+    </script>
+</body>
+</html>
